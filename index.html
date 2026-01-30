@@ -106,6 +106,24 @@
             cursor: pointer; box-shadow: 0 4px 0 #ccc; 
             border: 3px solid transparent; color: #555;
             user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cell-number {
+            position: absolute;
+            top: 3px;
+            left: 5px;
+            font-size: clamp(0.7rem, 1.5vw, 1rem);
+            color: #aaa;
+            font-weight: bold;
+            font-family: var(--font-main);
+        }
+        
+        .cell-content {
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-family: var(--font-hand);
+            font-weight: 700;
         }
         
         .cell:active { transform: scale(0.95); }
@@ -186,13 +204,14 @@
             .score-box { padding: 8px 15px; min-width: 80px; }
             .score-value { font-size: 1.5rem; }
             #word-text { font-size: 1.8rem; margin: 10px 0 20px 0; }
+            .cell-number { font-size: 0.8rem; top: 2px; left: 4px; }
         }
     </style>
 </head>
 <body class="spring">
 
 <div class="container" id="setup-screen">
-    <h1>🎈 Let's play with Be Heard 🎈</h1>
+    <h1>🎈 Let's play-Be Heard 🎈</h1>
     <div class="setup-box">
         <div>
             <label>1. Grid Size</label>
@@ -397,14 +416,55 @@
         const container = document.getElementById('grid-container');
         container.innerHTML = '';
         container.style.gridTemplateColumns = `repeat(${currentSize}, 1fr)`;
+        
         gridWords.forEach((_, i) => {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.id = `cell-${i}`;
-            cell.innerText = '?';
+            cell.dataset.word = gridWords[i];
+            
+            // Tạo số thứ tự
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'cell-number';
+            numberSpan.textContent = (i + 1).toString();
+            
+            // Tạo nội dung chính (X/O)
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'cell-content';
+            
+            cell.appendChild(numberSpan);
+            cell.appendChild(contentSpan);
             cell.onclick = () => openWord(i);
             container.appendChild(cell);
         });
+        
+        updateCellStates();
+    }
+
+    function updateCellStates() {
+        for (let i = 0; i < boardState.length; i++) {
+            const cell = document.getElementById(`cell-${i}`);
+            if (!cell) continue;
+            
+            const numberSpan = cell.querySelector('.cell-number');
+            const contentSpan = cell.querySelector('.cell-content');
+            
+            if (boardState[i]) {
+                // Ô đã được đánh dấu
+                cell.classList.add(`marked-${boardState[i]}`);
+                numberSpan.style.display = 'none'; // Ẩn số thứ tự
+                contentSpan.style.display = 'block'; // Hiển thị X/O
+                contentSpan.textContent = boardState[i];
+                contentSpan.style.color = boardState[i] === 'X' ? '#ff7675' : '#74b9ff';
+                cell.style.cursor = 'default'; // Không cho click lại
+            } else {
+                // Ô chưa được đánh dấu
+                cell.classList.remove('marked-X', 'marked-O', 'winning-cell');
+                numberSpan.style.display = 'block'; // Hiển thị số thứ tự
+                contentSpan.style.display = 'none'; // Ẩn X/O
+                cell.style.cursor = 'pointer'; // Cho phép click
+            }
+        }
     }
 
     function openWord(idx) {
@@ -429,12 +489,13 @@
 
     function markWinner(team) {
         boardState[selectedIdx] = team;
-        const cell = document.getElementById(`cell-${selectedIdx}`);
-        cell.innerText = team;
-        cell.classList.add(`marked-${team}`);
+        
+        // Cập nhật lại giao diện ô
+        updateCellStates();
+        
         if (team === 'X') scoreX++; else scoreO++;
         updateScores();
-        closeModal(); // Hàm này đã bao gồm việc tắt âm thanh
+        closeModal();
         checkWin(team);
     }
 
@@ -450,7 +511,16 @@
         wordsToShuffle.sort(() => Math.random() - 0.5);
         unmarkedIndices.forEach((originalIdx, i) => gridWords[originalIdx] = wordsToShuffle[i]);
         if (soundEnabled.effects) playRandomSound(soundEffects);
-        alert("Đã xáo trộn các ô chưa mở!");
+        
+        // Cập nhật data-word attribute
+        unmarkedIndices.forEach((originalIdx, i) => {
+            const cell = document.getElementById(`cell-${originalIdx}`);
+            if (cell) {
+                cell.dataset.word = wordsToShuffle[i];
+            }
+        });
+        
+        alert("Shuffle - Done!");
     }
 
     function checkWin(team) {
@@ -494,7 +564,10 @@
         }
 
         if (win) {
-            winningCells.forEach(idx => document.getElementById(`cell-${idx}`).classList.add('winning-cell'));
+            winningCells.forEach(idx => {
+                const cell = document.getElementById(`cell-${idx}`);
+                if (cell) cell.classList.add('winning-cell');
+            });
             setTimeout(() => triggerWin(team), 500);
         }
     }
