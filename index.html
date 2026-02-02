@@ -33,6 +33,7 @@
             transition: background 0.5s;
             color: #2d3436;
             padding: 10px;
+            overflow-x: hidden;
         }
 
         /* Themes */
@@ -51,6 +52,14 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             text-align: center;
             border: 4px solid white;
+        }
+
+        #game-board.container {
+            display: flex;
+            flex-direction: column;
+            min-height: auto;
+            max-height: 95vh;
+            overflow: hidden;
         }
 
         h1 { 
@@ -90,18 +99,37 @@
         /* Game Board */
         #game-board { display: none; }
         
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+        }
+        
+        .grid-container-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            padding: 10px 0;
+        }
+        
         .grid {
             display: grid; 
             gap: 6px; 
-            margin: 15px auto; 
-            width: 100%;
-            aspect-ratio: 1/1; 
+            margin: 0 auto;
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 500px;
+            max-height: 500px;
+            aspect-ratio: 1/1;
         }
         
         .cell {
             background: white; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: clamp(1.5rem, 5vw, 3rem); 
             font-family: var(--font-hand); font-weight: 700;
             cursor: pointer; box-shadow: 0 4px 0 #ccc; 
             border: 3px solid transparent; color: #555;
@@ -114,14 +142,14 @@
             position: absolute;
             top: 3px;
             left: 5px;
-            font-size: clamp(0.7rem, 1.5vw, 1rem);
+            font-size: 0.9rem;
             color: #aaa;
             font-weight: bold;
             font-family: var(--font-main);
         }
         
         .cell-content {
-            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-size: 2.5rem;
             font-family: var(--font-hand);
             font-weight: 700;
         }
@@ -133,13 +161,25 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* Score & Toolbar */
-        .score-container { display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .score-container { 
+            display: flex; 
+            justify-content: space-around; 
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
         .score-box { background: white; padding: 10px 20px; border-radius: 15px; min-width: 100px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
         .score-value { font-size: 2rem; font-weight: bold; }
         .score-x { border-bottom: 4px solid #ff7675; color: #d63031; }
         .score-o { border-bottom: 4px solid #74b9ff; color: #0984e3; }
 
-        .toolbar { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .toolbar { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
         .tool-btn { font-size: 1rem; padding: 10px 15px; width: auto; margin-top: 0; background: #636e72; box-shadow: 0 4px 0 #2d3436; }
 
         /* Modal Responsive */
@@ -199,12 +239,35 @@
             .full-width { grid-column: span 1; }
             .container { padding: 15px; margin: 5px 0; border-width: 2px; }
             h1 { font-size: 1.8rem; }
-            .grid { gap: 4px; }
-            .cell { border-radius: 8px; box-shadow: 0 2px 0 #ccc; }
+            .grid { 
+                width: 85vmin;
+                height: 85vmin;
+                gap: 4px; 
+            }
+            .cell { 
+                border-radius: 8px; 
+                box-shadow: 0 2px 0 #ccc; 
+            }
+            .cell-content {
+                font-size: 2rem;
+            }
+            .cell-number {
+                font-size: 0.8rem;
+                top: 2px;
+                left: 4px;
+            }
             .score-box { padding: 8px 15px; min-width: 80px; }
             .score-value { font-size: 1.5rem; }
             #word-text { font-size: 1.8rem; margin: 10px 0 20px 0; }
-            .cell-number { font-size: 0.8rem; top: 2px; left: 4px; }
+        }
+        
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .grid {
+                width: 70vmin;
+                height: 70vmin;
+                max-width: 450px;
+                max-height: 450px;
+            }
         }
     </style>
 </head>
@@ -248,28 +311,33 @@
 </div>
 
 <div class="container" id="game-board">
-    <div class="score-container">
-        <div class="score-box score-x">
-            <div>Team X</div>
-            <div class="score-value" id="score-x">0</div>
+    <div class="game-content">
+        <div class="score-container">
+            <div class="score-box score-x">
+                <div>Team X</div>
+                <div class="score-value" id="score-x">0</div>
+            </div>
+            <div class="score-box score-o">
+                <div>Team O</div>
+                <div class="score-value" id="score-o">0</div>
+            </div>
         </div>
-        <div class="score-box score-o">
-            <div>Team O</div>
-            <div class="score-value" id="score-o">0</div>
+        
+        <div class="toolbar">
+            <select id="ingame-theme" onchange="changeTheme(this.value)" style="width: auto;">
+                <option value="spring">Spring</option>
+                <option value="summer">Summer</option>
+                <option value="autumn">Autumn</option>
+                <option value="winter">Winter</option>
+            </select>
+            <button class="tool-btn" onclick="shuffleWords()">Shuffle 🎲</button>
+            <button class="tool-btn" style="background: #fab1a0; box-shadow: 0 4px 0 #e17055;" onclick="location.reload()">Reset 🔄</button>
+        </div>
+        
+        <div class="grid-container-wrapper">
+            <div id="grid-container" class="grid"></div>
         </div>
     </div>
-    
-    <div class="toolbar">
-        <select id="ingame-theme" onchange="changeTheme(this.value)" style="width: auto;">
-            <option value="spring">Spring</option>
-            <option value="summer">Summer</option>
-            <option value="autumn">Autumn</option>
-            <option value="winter">Winter</option>
-        </select>
-        <button class="tool-btn" onclick="shuffleWords()">Shuffle 🎲</button>
-        <button class="tool-btn" style="background: #fab1a0; box-shadow: 0 4px 0 #e17055;" onclick="location.reload()">Reset 🔄</button>
-    </div>
-    <div id="grid-container" class="grid"></div>
 </div>
 
 <div id="modal">
@@ -314,7 +382,7 @@
     
     // Sound System
     let soundEnabled = { effects: true, music: true };
-    let currentEffectAudio = null; // Biến lưu âm thanh hiệu ứng đang chạy
+    let currentEffectAudio = null;
     
     const soundEffects = [
         'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', 
@@ -342,7 +410,6 @@
             btn.classList.add('sound-off');
         }
 
-        // Xử lý Logic tắt/bật
         if (type === 'music') {
             const bgAudio = document.getElementById('bg-audio');
             if (bgAudio.src) {
@@ -350,7 +417,6 @@
                 else bgAudio.pause();
             }
         } else if (type === 'effects') {
-            // Nếu tắt hiệu ứng, dừng ngay âm thanh đang chạy (nếu có)
             if (!soundEnabled.effects && currentEffectAudio) {
                 currentEffectAudio.pause();
                 currentEffectAudio.currentTime = 0;
@@ -383,13 +449,12 @@
             .map(line => line.replace(/^[\s\d.•*-]+/, '').trim())
             .filter(line => line.length > 0);
 
-        // Xử lý nhạc nền (Mobile Optimized)
+        // Xử lý nhạc nền
         if (musicInput.files[0]) {
             const audio = document.getElementById('bg-audio');
             audio.src = URL.createObjectURL(musicInput.files[0]);
-            audio.load(); // Load để sẵn sàng
+            audio.load();
             if (soundEnabled.music) {
-                // Play ngay trong sự kiện click để trình duyệt không chặn
                 audio.play().catch(e => console.log("Không thể tự động phát nhạc:", e));
             }
         }
@@ -399,6 +464,9 @@
         setupBoard();
         document.getElementById('setup-screen').style.display = 'none';
         document.getElementById('game-board').style.display = 'block';
+        
+        // Điều chỉnh kích thước grid sau khi hiển thị
+        adjustGridSize();
     }
 
     function setupBoard() {
@@ -416,6 +484,7 @@
         const container = document.getElementById('grid-container');
         container.innerHTML = '';
         container.style.gridTemplateColumns = `repeat(${currentSize}, 1fr)`;
+        container.style.gridTemplateRows = `repeat(${currentSize}, 1fr)`;
         
         gridWords.forEach((_, i) => {
             const cell = document.createElement('div');
@@ -423,12 +492,10 @@
             cell.id = `cell-${i}`;
             cell.dataset.word = gridWords[i];
             
-            // Tạo số thứ tự
             const numberSpan = document.createElement('span');
             numberSpan.className = 'cell-number';
             numberSpan.textContent = (i + 1).toString();
             
-            // Tạo nội dung chính (X/O)
             const contentSpan = document.createElement('span');
             contentSpan.className = 'cell-content';
             
@@ -450,19 +517,17 @@
             const contentSpan = cell.querySelector('.cell-content');
             
             if (boardState[i]) {
-                // Ô đã được đánh dấu
                 cell.classList.add(`marked-${boardState[i]}`);
-                numberSpan.style.display = 'none'; // Ẩn số thứ tự
-                contentSpan.style.display = 'block'; // Hiển thị X/O
+                numberSpan.style.display = 'none';
+                contentSpan.style.display = 'block';
                 contentSpan.textContent = boardState[i];
                 contentSpan.style.color = boardState[i] === 'X' ? '#ff7675' : '#74b9ff';
-                cell.style.cursor = 'default'; // Không cho click lại
+                cell.style.cursor = 'default';
             } else {
-                // Ô chưa được đánh dấu
                 cell.classList.remove('marked-X', 'marked-O', 'winning-cell');
-                numberSpan.style.display = 'block'; // Hiển thị số thứ tự
-                contentSpan.style.display = 'none'; // Ẩn X/O
-                cell.style.cursor = 'pointer'; // Cho phép click
+                numberSpan.style.display = 'block';
+                contentSpan.style.display = 'none';
+                cell.style.cursor = 'pointer';
             }
         }
     }
@@ -471,7 +536,6 @@
         if (boardState[idx]) return;
         selectedIdx = idx;
         
-        // Phát âm thanh nếu đang bật
         if (soundEnabled.effects) playRandomSound(soundEffects);
         
         document.getElementById('word-text').innerText = gridWords[idx];
@@ -480,7 +544,6 @@
 
     function closeModal() { 
         document.getElementById('modal').style.display = 'none';
-        // QUAN TRỌNG: Dừng âm thanh hiệu ứng ngay khi đóng modal
         if (currentEffectAudio) {
             currentEffectAudio.pause();
             currentEffectAudio.currentTime = 0;
@@ -490,7 +553,6 @@
     function markWinner(team) {
         boardState[selectedIdx] = team;
         
-        // Cập nhật lại giao diện ô
         updateCellStates();
         
         if (team === 'X') scoreX++; else scoreO++;
@@ -512,7 +574,6 @@
         unmarkedIndices.forEach((originalIdx, i) => gridWords[originalIdx] = wordsToShuffle[i]);
         if (soundEnabled.effects) playRandomSound(soundEffects);
         
-        // Cập nhật data-word attribute
         unmarkedIndices.forEach((originalIdx, i) => {
             const cell = document.getElementById(`cell-${originalIdx}`);
             if (cell) {
@@ -584,16 +645,13 @@
     function closeWinModal() {
         document.getElementById('win-modal').style.display = 'none';
         document.querySelectorAll('.winning-cell').forEach(cell => cell.classList.remove('winning-cell'));
-        // Dừng nhạc chiến thắng nếu vẫn còn chạy
         if (currentEffectAudio) {
             currentEffectAudio.pause();
             currentEffectAudio.currentTime = 0;
         }
     }
 
-    // Hàm phát nhạc thông minh: lưu vào biến toàn cục để kiểm soát
     function playRandomSound(arr) {
-        // Dừng âm thanh cũ trước khi phát mới
         if (currentEffectAudio) {
             currentEffectAudio.pause();
             currentEffectAudio.currentTime = 0;
@@ -603,9 +661,36 @@
         currentEffectAudio = new Audio(url);
         currentEffectAudio.volume = 0.5;
         
-        // Bắt lỗi nếu trình duyệt chặn
         currentEffectAudio.play().catch(e => console.log("Play error:", e));
     }
+
+    // Hàm điều chỉnh kích thước grid để đảm bảo luôn vuông và vừa màn hình
+    function adjustGridSize() {
+        const gridContainer = document.querySelector('.grid');
+        const gameBoard = document.getElementById('game-board');
+        
+        if (!gridContainer || !gameBoard) return;
+        
+        // Tính toán không gian có sẵn
+        const gameBoardRect = gameBoard.getBoundingClientRect();
+        const toolbarHeight = document.querySelector('.toolbar').offsetHeight;
+        const scoreHeight = document.querySelector('.score-container').offsetHeight;
+        
+        const availableHeight = window.innerHeight - gameBoardRect.top - 30;
+        const availableWidth = gameBoardRect.width;
+        
+        // Tính kích thước tối đa có thể
+        const maxSize = Math.min(availableHeight - toolbarHeight - scoreHeight - 40, availableWidth - 40);
+        
+        // Đảm bảo không vượt quá giới hạn
+        const finalSize = Math.min(maxSize, 500);
+        
+        gridContainer.style.width = `${finalSize}px`;
+        gridContainer.style.height = `${finalSize}px`;
+    }
+
+    // Thêm sự kiện resize để điều chỉnh kích thước
+    window.addEventListener('resize', adjustGridSize);
 </script>
 </body>
 </html>
